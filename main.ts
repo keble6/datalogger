@@ -1,16 +1,48 @@
+function readTime () {
+	
+}
 function parseCommand () {
     command = stringIn.substr(0, 2)
     params = stringIn.substr(2, stringIn.length - 2)
     if (command.compare("xx") == 0) {
         serial.writeLine("Deleting log!")
         datalogger.deleteLog()
+    } else if (command.compare("rt") == 0) {
+        readTime()
+    } else if (command.compare("st") == 0) {
+        setTime()
+    } else {
+        serial.writeLine("Invalid command")
     }
 }
 datalogger.onLogFull(function () {
     logging = false
 })
+function setTime () {
+    serial.writeLine("" + command + ": " + params)
+    yr = params.substr(0, 4)
+    mo = params.substr(4, 2)
+    dt = params.substr(6, 2)
+    hh = params.substr(8, 2)
+    mm = params.substr(10, 2)
+    DS3231.dateTime(
+    parseFloat(yr),
+    parseFloat(mm),
+    parseFloat(dt),
+    1,
+    parseFloat(hh),
+    parseFloat(mm),
+    0
+    )
+    serial.writeLine("Dare & time have been set ")
+}
 let inNumber = 0
 let charIn = ""
+let mm = ""
+let hh = ""
+let dt = ""
+let mo = ""
+let yr = ""
 let params = ""
 let stringIn = ""
 let command = ""
