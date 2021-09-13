@@ -1,6 +1,19 @@
+function parseCommand () {
+    command = stringIn.substr(0, 2)
+    params = stringIn.substr(2, stringIn.length - 2)
+    if (command.compare("xx") == 0) {
+        serial.writeLine("Deleting log!")
+        datalogger.deleteLog()
+    }
+}
 datalogger.onLogFull(function () {
     logging = false
 })
+let inNumber = 0
+let charIn = ""
+let params = ""
+let stringIn = ""
+let command = ""
 let logging = false
 led.enable(false)
 let Pstate = [0, 1]
@@ -15,7 +28,6 @@ pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
 logging = true
-let inNumber = 0
 let lastInNumber = 1024
 datalogger.setColumns([
 "IN1 +24V",
@@ -31,6 +43,17 @@ datalogger.setColumns([
 ])
 datalogger.includeTimestamp(FlashLogTimeStampFormat.Minutes)
 datalogger.mirrorToSerial(false)
+basic.forever(function () {
+    charIn = serial.readString()
+    stringIn = "" + stringIn + charIn
+    if (charIn.compare(String.fromCharCode(13)) == 0) {
+        serial.writeString("" + String.fromCharCode(13) + String.fromCharCode(10))
+        parseCommand()
+        stringIn = ""
+    } else {
+        serial.writeString(charIn)
+    }
+})
 loops.everyInterval(5000, function () {
     if (logging) {
         serial.writeLine("Logging sample start")
