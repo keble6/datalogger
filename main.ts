@@ -57,6 +57,7 @@ let command = ""
 let logging = false
 led.enable(false)
 let Pstate = [0, 1]
+let sampleTime = 5000
 pins.setPull(DigitalPin.P0, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P1, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P2, PinPullMode.PullNone)
@@ -82,7 +83,6 @@ datalogger.setColumns([
 "IN9 PED CLOSE",
 "inNumber"
 ])
-datalogger.includeTimestamp(FlashLogTimeStampFormat.Minutes)
 datalogger.mirrorToSerial(false)
 basic.forever(function () {
     charIn = serial.readString()
@@ -95,9 +95,8 @@ basic.forever(function () {
         serial.writeString(charIn)
     }
 })
-loops.everyInterval(5000, function () {
+loops.everyInterval(sampleTime, function () {
     if (logging) {
-        serial.writeLine("Logging sample start")
         Pstate[1] = pins.digitalReadPin(DigitalPin.P1)
         Pstate[2] = pins.digitalReadPin(DigitalPin.P2)
         Pstate[3] = pins.digitalReadPin(DigitalPin.P3)
@@ -110,13 +109,10 @@ loops.everyInterval(5000, function () {
         inNumber = 0
         for (let index = 0; index <= 8; index++) {
             inNumber += Pstate[index + 1] * 2 ** index
-            // debug
-            serial.writeString("" + Pstate[index + 1] + ", ")
         }
-        lastInNumber = 0
     }
-    serial.writeLine("inNumber =" + inNumber)
     if (inNumber != lastInNumber) {
+        serial.writeLine("Writing change to log file: " + inNumber)
         datalogger.logData([
         datalogger.createCV("Time", dateTimeString()),
         datalogger.createCV("IN1 +24V", Pstate[1]),
@@ -130,6 +126,6 @@ loops.everyInterval(5000, function () {
         datalogger.createCV("IN9 PED CLOSE", Pstate[9]),
         datalogger.createCV("inNumber", inNumber)
         ])
+        lastInNumber = inNumber
     }
-    lastInNumber = inNumber
 })
