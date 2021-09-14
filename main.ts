@@ -1,6 +1,3 @@
-function readTime () {
-	
-}
 function parseCommand () {
     command = stringIn.substr(0, 2)
     params = stringIn.substr(2, stringIn.length - 2)
@@ -8,9 +5,10 @@ function parseCommand () {
         serial.writeLine("Deleting log!")
         datalogger.deleteLog()
     } else if (command.compare("rt") == 0) {
-        readTime()
+        serial.writeLine("" + (dateTimeString()))
     } else if (command.compare("st") == 0) {
         setTime()
+        serial.writeLine("Time has been set")
     } else {
         serial.writeLine("Invalid command")
     }
@@ -18,6 +16,16 @@ function parseCommand () {
 datalogger.onLogFull(function () {
     logging = false
 })
+function leadingZero (num: number) {
+    if (num < 10) {
+        return "0" + num
+    } else {
+        return convertToText(num)
+    }
+}
+function dateTimeString () {
+    return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute())
+}
 function setTime () {
     serial.writeLine("" + command + ": " + params)
     yr = params.substr(0, 4)
@@ -34,7 +42,7 @@ function setTime () {
     parseFloat(mm),
     0
     )
-    serial.writeLine("Dare & time have been set ")
+    serial.writeLine("Date & time have been set ")
 }
 let inNumber = 0
 let charIn = ""
@@ -62,6 +70,7 @@ pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
 logging = true
 let lastInNumber = 1024
 datalogger.setColumns([
+"Time",
 "IN1 +24V",
 "IN2 SOL-",
 "IN3 SOL+",
@@ -109,6 +118,7 @@ loops.everyInterval(5000, function () {
     serial.writeLine("inNumber =" + inNumber)
     if (inNumber != lastInNumber) {
         datalogger.logData([
+        datalogger.createCV("Time", dateTimeString()),
         datalogger.createCV("IN1 +24V", Pstate[1]),
         datalogger.createCV("IN2 SOL-", Pstate[2]),
         datalogger.createCV("IN3 SOL+", Pstate[3]),
