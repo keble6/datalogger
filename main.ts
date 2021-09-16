@@ -13,15 +13,15 @@ function parseCommand () {
         serial.writeLine("Invalid command")
     }
 }
-datalogger.onLogFull(function () {
-    logging = false
-})
 function leadingZero (num: number) {
     if (num < 10) {
         return "0" + num
     } else {
         return convertToText(num)
     }
+}
+function upLoad () {
+	
 }
 function dateTimeString () {
     return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute())
@@ -45,18 +45,16 @@ function setTime () {
     serial.writeLine("Date & time have been set ")
 }
 let inNumber = 0
-let charIn = ""
-let mm = ""
-let hh = ""
-let dt = ""
-let mo = ""
-let yr = ""
-let params = ""
-let stringIn = ""
-let command = ""
-let logging = false
-led.enable(false)
-let Pstate = [0, 1]
+let charIn: string = []
+let mm: string = []
+let hh: string = []
+let dt: string = []
+let mo: string = []
+let yr: string = []
+let params: string = []
+let stringIn: string = []
+let command: string = []
+let Pstate = [0]
 let sampleTime = 5000
 pins.setPull(DigitalPin.P0, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P1, PinPullMode.PullNone)
@@ -68,22 +66,10 @@ pins.setPull(DigitalPin.P6, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
-logging = true
+let logging = true
 let lastInNumber = 1024
-datalogger.setColumns([
-"Time",
-"IN1 +24V",
-"IN2 SOL-",
-"IN3 SOL+",
-"IN4 ESTOP2",
-"IN5 ESTOP1",
-"IN6 KEY NC",
-"IN7 KEY NO",
-"IN8 PED OPEN",
-"IN9 PED CLOSE",
-"inNumber"
-])
-datalogger.mirrorToSerial(false)
+let dateTimeReadings: number[] = []
+let pinReadings = [0]
 basic.forever(function () {
     charIn = serial.readString()
     stringIn = "" + stringIn + charIn
@@ -92,7 +78,7 @@ basic.forever(function () {
         parseCommand()
         stringIn = ""
     } else {
-        serial.writeString(charIn)
+        serial.writeString("" + (charIn))
     }
 })
 loops.everyInterval(sampleTime, function () {
@@ -112,20 +98,8 @@ loops.everyInterval(sampleTime, function () {
         }
     }
     if (inNumber != lastInNumber) {
-        serial.writeLine("Writing change to log file: " + inNumber)
-        datalogger.logData([
-        datalogger.createCV("Time", dateTimeString()),
-        datalogger.createCV("IN1 +24V", Pstate[1]),
-        datalogger.createCV("IN2 SOL-", Pstate[2]),
-        datalogger.createCV("IN3 SOL+", Pstate[3]),
-        datalogger.createCV("IN4 ESTOP2", Pstate[4]),
-        datalogger.createCV("IN5 ESTOP1", Pstate[5]),
-        datalogger.createCV("IN6 KEY NC", Pstate[6]),
-        datalogger.createCV("IN7 KEY NO", Pstate[7]),
-        datalogger.createCV("IN8 PED OPEN", Pstate[8]),
-        datalogger.createCV("IN9 PED CLOSE", Pstate[9]),
-        datalogger.createCV("inNumber", inNumber)
-        ])
+        serial.writeLine("Writing change to log: " + inNumber)
+        pinReadings.push(inNumber)
         lastInNumber = inNumber
     }
 })
