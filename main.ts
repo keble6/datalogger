@@ -14,7 +14,16 @@ function parseCommand () {
     }
 }
 function dec2bin (num: number) {
-    return "1011"
+    maxbits = 9
+    maxbits += -1
+    x = num
+    for (let i = 0; i <= maxbits; i++) {
+        div = 2 ** (maxbits - i)
+        bit = Math.floor(x / div)
+        string = "" + string + convertToText(bit)
+        x = x - bit * div
+    }
+    return string
 }
 function leadingZero (num: number) {
     if (num < 10) {
@@ -25,21 +34,21 @@ function leadingZero (num: number) {
 }
 function upLoad () {
     basic.pause(100)
-    readingsLength = dateTimeReadings.length
+    readingsLength = dateTimeList.length
     if (readingsLength != 0) {
         for (let index = 0; index <= readingsLength - 1; index++) {
             let connected = 0
             if (connected == 1) {
-                pinReading = dec2bin(pinReadings[index])
-                bluetooth.uartWriteString(dateTimeReadings[index])
+                pinReading = dec2bin(pinReadingList[index])
+                bluetooth.uartWriteString(dateTimeList[index])
                 basic.pause(100)
                 bluetooth.uartWriteString(",")
                 basic.pause(100)
-                for (let bit = 0; bit <= 4; bit++) {
-                    bluetooth.uartWriteString("" + pinReading.charAt(8 - bit) + ",")
+                for (let bit2 = 0; bit2 <= 4; bit2++) {
+                    bluetooth.uartWriteString("" + pinReading.charAt(8 - bit2) + ",")
                 }
-                for (let bit = 0; bit <= 3; bit++) {
-                    bluetooth.uartWriteString("" + pinReading.charAt(3 - bit) + ",")
+                for (let bit3 = 0; bit3 <= 3; bit3++) {
+                    bluetooth.uartWriteString("" + pinReading.charAt(3 - bit3) + ",")
                 }
                 bluetooth.uartWriteLine("")
                 basic.pause(100)
@@ -80,11 +89,16 @@ let mo = ""
 let yr = ""
 let pinReading = ""
 let readingsLength = 0
+let string = ""
+let bit = 0
+let div = 0
+let x = 0
+let maxbits = 0
 let params = ""
 let stringIn = ""
 let command = ""
-let pinReadings: number[] = []
-let dateTimeReadings: string[] = []
+let pinReadingList: number[] = []
+let dateTimeList: string[] = []
 let Pstate = [0]
 let sampleTime = 5000
 pins.setPull(DigitalPin.P0, PinPullMode.PullNone)
@@ -99,8 +113,8 @@ pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
 let logging = true
 let lastInNumber = 1024
-dateTimeReadings = [""]
-pinReadings = [0]
+dateTimeList = [""]
+pinReadingList = [0]
 basic.forever(function () {
     charIn = serial.readString()
     stringIn = "" + stringIn + charIn
@@ -114,23 +128,23 @@ basic.forever(function () {
 })
 loops.everyInterval(sampleTime, function () {
     if (logging) {
-        Pstate[1] = pins.digitalReadPin(DigitalPin.P1)
-        Pstate[2] = pins.digitalReadPin(DigitalPin.P2)
-        Pstate[3] = pins.digitalReadPin(DigitalPin.P3)
-        Pstate[4] = pins.digitalReadPin(DigitalPin.P4)
-        Pstate[5] = pins.digitalReadPin(DigitalPin.P5)
-        Pstate[6] = pins.digitalReadPin(DigitalPin.P6)
-        Pstate[7] = pins.digitalReadPin(DigitalPin.P7)
-        Pstate[8] = pins.digitalReadPin(DigitalPin.P8)
-        Pstate[9] = pins.digitalReadPin(DigitalPin.P9)
         inNumber = 0
-        for (let index = 0; index <= 8; index++) {
-            inNumber += Pstate[index + 1] * 2 ** index
-        }
+        inNumber += pins.digitalReadPin(DigitalPin.P1)
+        inNumber += 2 * pins.digitalReadPin(DigitalPin.P2)
+        inNumber += 4 * pins.digitalReadPin(DigitalPin.P3)
+        inNumber += 8 * pins.digitalReadPin(DigitalPin.P4)
+        inNumber += 16 * pins.digitalReadPin(DigitalPin.P5)
+        inNumber += 32 * pins.digitalReadPin(DigitalPin.P6)
+        inNumber += 64 * pins.digitalReadPin(DigitalPin.P7)
+        inNumber += 128 * pins.digitalReadPin(DigitalPin.P8)
+        inNumber += 256 * pins.digitalReadPin(DigitalPin.P9)
     }
     if (inNumber != lastInNumber) {
         serial.writeLine("Writing change to log: " + inNumber)
-        pinReadings.push(inNumber)
+        // store pin state
+        pinReadingList.push(inNumber)
+        // store timestamp
+        dateTimeList.push(dateTimeString())
         lastInNumber = inNumber
     }
 })
