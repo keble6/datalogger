@@ -113,6 +113,7 @@ function upLoadUSB () {
         serial.writeLine("No stored readings!")
     }
 }
+let hourly = 0
 let inNumber = 0
 let charIn = ""
 let mm = ""
@@ -183,5 +184,15 @@ loops.everyInterval(sampleTime, function () {
         // store timestamp
         dateTimeList.push(dateTimeString())
         lastInNumber = inNumber
+    }
+    // Every hour: store pinReading and battery voltage (TODO)
+    if (DS3231.minute() == 0 && hourly == 0) {
+        hourly = 1
+        // store pin state
+        pinReadingList.push(inNumber)
+        // store timestamp
+        dateTimeList.push(dateTimeString())
+    } else {
+        hourly = 0
     }
 })
