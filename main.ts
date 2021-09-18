@@ -43,6 +43,7 @@ bluetooth.onBluetoothDisconnected(function () {
     connected = 0
 })
 function upLoad () {
+    serial.writeLine("Starting BT upload")
     basic.pause(100)
     readingsLength = dateTimeList.length
     if (readingsLength != 0) {
@@ -51,7 +52,7 @@ function upLoad () {
                 pinReading = dec2bin(pinReadingList[index])
                 bluetooth.uartWriteString(dateTimeList[index])
                 basic.pause(100)
-                bluetooth.uartWriteString(",")
+                bluetooth.uartWriteString(", ")
                 basic.pause(100)
                 for (let bit2 = 0; bit2 <= 4; bit2++) {
                     bluetooth.uartWriteString("" + pinReading.charAt(8 - bit2) + ",")
