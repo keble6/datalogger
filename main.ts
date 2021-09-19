@@ -92,19 +92,19 @@ function setTime () {
 function upLoadUSB () {
     readingsLength = dateTimeList.length
     if (readingsLength != 0) {
-        for (let index = 0; index <= readingsLength - 1; index++) {
+        for (let index2 = 0; index2 <= readingsLength - 1; index2++) {
             // convert number from pins to binary string
-            pinReading = dec2bin(pinReadingList[index])
-            serial.writeString(dateTimeList[index])
+            pinReading = dec2bin(pinReadingList[index2])
+            serial.writeString(dateTimeList[index2])
             basic.pause(10)
             serial.writeString(", ")
             basic.pause(10)
-            for (let bit2 = 0; bit2 <= 4; bit2++) {
-                serial.writeString("" + pinReading.charAt(8 - bit2) + ",")
+            for (let bit22 = 0; bit22 <= 4; bit22++) {
+                serial.writeString("" + pinReading.charAt(8 - bit22) + ",")
                 basic.pause(10)
             }
-            for (let bit3 = 0; bit3 <= 3; bit3++) {
-                serial.writeString("" + pinReading.charAt(3 - bit3) + ",")
+            for (let bit32 = 0; bit32 <= 3; bit32++) {
+                serial.writeString("" + pinReading.charAt(3 - bit32) + ",")
                 basic.pause(10)
             }
             serial.writeLine("")
@@ -149,7 +149,6 @@ pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
 let lastInNumber = 1024
-let hourly = 0
 dateTimeList = [""]
 pinReadingList = [0]
 basic.forever(function () {
@@ -183,15 +182,11 @@ loops.everyInterval(sampleTime, function () {
         lastInNumber = inNumber
     }
     // Make a reading once every hour as a heartbeat
-    if (DS3231.minute() == 0 && hourly == 0) {
-        hourly = 1
-    }
-    // Every hour: store pinReading and battery voltage (TODO)
-    if (hourly == 1) {
+    if (DS3231.minute() == 0 && DS3231.second() == 0) {
         // store pin state
         pinReadingList.push(inNumber)
         // store timestamp
         dateTimeList.push(dateTimeString())
-        hourly = 0
+        serial.writeLine("Logging  hourly at  " + dateTimeString())
     }
 })
