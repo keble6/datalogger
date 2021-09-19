@@ -113,7 +113,6 @@ function upLoadUSB () {
         serial.writeLine("No stored readings!")
     }
 }
-let hourly = 0
 let inNumber = 0
 let charIn = ""
 let mm = ""
@@ -149,8 +148,8 @@ pins.setPull(DigitalPin.P6, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
-let logging = true
 let lastInNumber = 1024
+let hourly = 0
 dateTimeList = [""]
 pinReadingList = [0]
 basic.forever(function () {
@@ -165,18 +164,16 @@ basic.forever(function () {
     }
 })
 loops.everyInterval(sampleTime, function () {
-    if (logging) {
-        inNumber = 0
-        inNumber += pins.digitalReadPin(DigitalPin.P1)
-        inNumber += 2 * pins.digitalReadPin(DigitalPin.P2)
-        inNumber += 4 * pins.digitalReadPin(DigitalPin.P3)
-        inNumber += 8 * pins.digitalReadPin(DigitalPin.P4)
-        inNumber += 16 * pins.digitalReadPin(DigitalPin.P5)
-        inNumber += 32 * pins.digitalReadPin(DigitalPin.P6)
-        inNumber += 64 * pins.digitalReadPin(DigitalPin.P7)
-        inNumber += 128 * pins.digitalReadPin(DigitalPin.P8)
-        inNumber += 256 * pins.digitalReadPin(DigitalPin.P9)
-    }
+    inNumber = 0
+    inNumber += pins.digitalReadPin(DigitalPin.P1)
+    inNumber += 2 * pins.digitalReadPin(DigitalPin.P2)
+    inNumber += 4 * pins.digitalReadPin(DigitalPin.P3)
+    inNumber += 8 * pins.digitalReadPin(DigitalPin.P4)
+    inNumber += 16 * pins.digitalReadPin(DigitalPin.P5)
+    inNumber += 32 * pins.digitalReadPin(DigitalPin.P6)
+    inNumber += 64 * pins.digitalReadPin(DigitalPin.P7)
+    inNumber += 128 * pins.digitalReadPin(DigitalPin.P8)
+    inNumber += 256 * pins.digitalReadPin(DigitalPin.P9)
     if (inNumber != lastInNumber) {
         serial.writeLine("Logging: " + inNumber)
         // store pin state
@@ -185,14 +182,16 @@ loops.everyInterval(sampleTime, function () {
         dateTimeList.push(dateTimeString())
         lastInNumber = inNumber
     }
-    // Every hour: store pinReading and battery voltage (TODO)
+    // Make a reading once every hour as a heartbeat
     if (DS3231.minute() == 0 && hourly == 0) {
         hourly = 1
+    }
+    // Every hour: store pinReading and battery voltage (TODO)
+    if (hourly == 1) {
         // store pin state
         pinReadingList.push(inNumber)
         // store timestamp
         dateTimeList.push(dateTimeString())
-    } else {
         hourly = 0
     }
 })
