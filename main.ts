@@ -28,6 +28,25 @@ function dec2bin (num: number) {
     }
     return string
 }
+function readVbat () {
+    // Turn off display to allow use of all pins
+    led.enable(true)
+    // switch ON the 2.5V reference for Vbat
+    pins.digitalWritePin(DigitalPin.P16, 0)
+    basic.pause(10)
+    P0ADC = pins.analogReadPin(AnalogPin.P0)
+    // The ADC full scale is 1023 which is the Vbat (3V pin) voltage. So the number read at P0 (called P0ADC), which is held at 2.5V, is 1023*2.5/Vbat. So we get Vbat = 1023*2.5/PoADC
+    vbat = 25575 / P0ADC
+    // Round to 1 decimal place
+    vbat = Math.floor(vbat)
+    vbat = vbat / 10
+    basic.showNumber(vbat)
+    basic.pause(2000)
+    // Turn off display to allow use of all pins
+    led.enable(false)
+    // switch OFF the 2.5V reference for Vbat
+    pins.digitalWritePin(DigitalPin.P16, 1)
+}
 function leadingZero (num: number) {
     if (num < 10) {
         return "0" + num
@@ -113,8 +132,6 @@ function upLoadUSB () {
         serial.writeLine("No stored readings!")
     }
 }
-let vbat = 0
-let P0ADC = 0
 let inNumber = 0
 let charIn = ""
 let mm = ""
@@ -125,6 +142,8 @@ let yr = ""
 let pinReading = ""
 let readingsLength = 0
 let connected = 0
+let vbat = 0
+let P0ADC = 0
 let bit = 0
 let div = 0
 let x = 0
@@ -150,6 +169,9 @@ pins.setPull(DigitalPin.P6, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
+// P16 is used to switch the 2.5V reference for Vbat
+pins.digitalWritePin(DigitalPin.P16, 1)
+pins.setPull(DigitalPin.P16, PinPullMode.PullNone)
 let lastInNumber = 1024
 dateTimeList = [""]
 pinReadingList = [0]
@@ -193,14 +215,5 @@ loops.everyInterval(sampleTime, function () {
     }
 })
 loops.everyInterval(5000, function () {
-    // Turn off display to allow use of all pins
-    led.enable(true)
-    P0ADC = pins.analogReadPin(AnalogPin.P0)
-    vbat = 25575 / P0ADC
-    vbat = Math.floor(vbat)
-    vbat = vbat / 10
-    basic.showNumber(vbat)
-    basic.pause(2000)
-    // Turn off display to allow use of all pins
-    led.enable(false)
+    readVbat()
 })
