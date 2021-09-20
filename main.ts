@@ -113,6 +113,8 @@ function upLoadUSB () {
         serial.writeLine("No stored readings!")
     }
 }
+let vbat = 0
+let P0ADC = 0
 let inNumber = 0
 let charIn = ""
 let mm = ""
@@ -189,4 +191,16 @@ loops.everyInterval(sampleTime, function () {
         dateTimeList.push(dateTimeString())
         serial.writeLine("Logging  hourly at  " + dateTimeString())
     }
+})
+loops.everyInterval(5000, function () {
+    // Turn off display to allow use of all pins
+    led.enable(true)
+    P0ADC = pins.analogReadPin(AnalogPin.P0)
+    vbat = 25575 / P0ADC
+    vbat = Math.floor(vbat)
+    vbat = vbat / 10
+    basic.showNumber(vbat)
+    basic.pause(2000)
+    // Turn off display to allow use of all pins
+    led.enable(false)
 })
