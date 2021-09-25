@@ -114,9 +114,11 @@ function setTime () {
 }
 function upLoadUSB () {
     readingsLength = dateTimeList.length
+    serial.writeLine("readingsLength = " + readingsLength)
     if (readingsLength != 0) {
         for (let index2 = 0; index2 <= readingsLength - 1; index2++) {
-            let index = 0
+            let index3 = 0
+            serial.writeLine("index2 = " + index2)
             // convert number from pins to binary string
             pinReading = dec2bin(pinReadingList[index2])
             serial.writeString(dateTimeList[index2])
@@ -131,7 +133,7 @@ function upLoadUSB () {
                 serial.writeString("" + pinReading.charAt(3 - bit32) + ",")
                 basic.pause(10)
             }
-            serial.writeNumber(vBatList[index])
+            serial.writeNumber(vBatList[index3])
             serial.writeLine("")
             basic.pause(10)
         }
@@ -211,18 +213,18 @@ loops.everyInterval(sampleTime, function () {
     inNumber += 256 * pins.digitalReadPin(DigitalPin.P9)
     if (inNumber != lastInNumber) {
         serial.writeLine("Logging: " + inNumber)
-        // store pin state
-        pinReadingList.push(inNumber)
         // store timestamp
         dateTimeList.push(dateTimeString())
+        // store pin state
+        pinReadingList.push(inNumber)
         lastInNumber = inNumber
     }
     // Make a reading once every hour as a heartbeat
     if (DS3231.minute() == 0 && DS3231.second() == 0) {
-        // store pin state
-        pinReadingList.push(inNumber)
         // store timestamp
         dateTimeList.push(dateTimeString())
+        // store pin state
+        pinReadingList.push(inNumber)
         // store timestamp
         vBatList.push(readVbat())
         serial.writeLine("Logging  hourly at  " + dateTimeString())
