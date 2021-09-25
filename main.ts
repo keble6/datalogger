@@ -31,21 +31,23 @@ function dec2bin (num: number) {
 function readVbat () {
     // Turn off display to allow use of all pins
     led.enable(true)
-    // switch ON the 2.5V reference for Vbat
+    // switch ON the 2.0V reference for Vbat
     pins.digitalWritePin(DigitalPin.P16, 0)
     basic.pause(10)
     P0ADC = pins.analogReadPin(AnalogPin.P0)
-    // The ADC full scale is 1023 which is the Vbat (3V pin) voltage. So the number read at P0 (called P0ADC), which is held at 2.5V, is 1023*2.5/Vbat. So we get Vbat = 1023*2.5/PoADC
-    vbat = 25575 / P0ADC
+    serial.writeNumber(P0ADC)
+    // The ADC full scale is 1023 which is the Vbat (3V pin) voltage. So the number read at P0 (called P0ADC), which is held at 2.0V, is 1023*2.0/Vbat. So we get Vbat = 1023*2.0/PoADC
+    vBat = vRef * 1023 * 10 / P0ADC
     // Round to 1 decimal place
-    vbat = Math.floor(vbat)
-    vbat = vbat / 10
-    basic.showNumber(vbat)
+    vBat = Math.floor(vBat)
+    vBat = vBat / 10
+    basic.showNumber(vBat)
     basic.pause(2000)
     // Turn off display to allow use of all pins
     led.enable(false)
-    // switch OFF the 2.5V reference for Vbat
+    // switch OFF the 2.0V reference for Vbat
     pins.digitalWritePin(DigitalPin.P16, 1)
+    return vBat
 }
 function leadingZero (num: number) {
     if (num < 10) {
@@ -70,17 +72,19 @@ function upLoad () {
             if (connected == 1) {
                 pinReading = dec2bin(pinReadingList[index])
                 bluetooth.uartWriteString(dateTimeList[index])
-                basic.pause(100)
+                basic.pause(10)
                 bluetooth.uartWriteString(", ")
-                basic.pause(100)
+                basic.pause(10)
                 for (let bit2 = 0; bit2 <= 4; bit2++) {
                     bluetooth.uartWriteString("" + pinReading.charAt(8 - bit2) + ",")
                 }
                 for (let bit3 = 0; bit3 <= 3; bit3++) {
                     bluetooth.uartWriteString("" + pinReading.charAt(3 - bit3) + ",")
                 }
+                basic.pause(10)
+                bluetooth.uartWriteNumber(vBatList[index])
+                basic.pause(10)
                 bluetooth.uartWriteLine("")
-                basic.pause(100)
             }
         }
     } else {
@@ -142,7 +146,7 @@ let yr = ""
 let pinReading = ""
 let readingsLength = 0
 let connected = 0
-let vbat = 0
+let vBat = 0
 let P0ADC = 0
 let bit = 0
 let div = 0
@@ -152,11 +156,15 @@ let string = ""
 let params = ""
 let stringIn = ""
 let command = ""
+let vBatList: number[] = []
 let pinReadingList: number[] = []
 let dateTimeList: string[] = []
+let vRef = 0
 serial.writeLine("Starting DATA LOGGER!")
 // Turn off display to allow use of all pins
 led.enable(false)
+// Reference voltage at P0 (when enabled by P16=0)
+vRef = 1.9
 let Pstate = [0]
 let sampleTime = 1000
 pins.setPull(DigitalPin.P0, PinPullMode.PullNone)
@@ -169,12 +177,13 @@ pins.setPull(DigitalPin.P6, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P7, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P8, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
-// P16 is used to switch the 2.5V reference for Vbat
+// P16 is used to switch the 2.0V reference for Vbat
 pins.digitalWritePin(DigitalPin.P16, 1)
 pins.setPull(DigitalPin.P16, PinPullMode.PullNone)
 let lastInNumber = 1024
 dateTimeList = [""]
 pinReadingList = [0]
+vBatList = [0]
 basic.forever(function () {
     charIn = serial.readString()
     stringIn = "" + stringIn + charIn
@@ -211,9 +220,8 @@ loops.everyInterval(sampleTime, function () {
         pinReadingList.push(inNumber)
         // store timestamp
         dateTimeList.push(dateTimeString())
+        // store timestamp
+        vBatList.push(readVbat())
         serial.writeLine("Logging  hourly at  " + dateTimeString())
     }
-})
-loops.everyInterval(5000, function () {
-    readVbat()
 })
