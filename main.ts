@@ -116,6 +116,7 @@ function upLoadUSB () {
     readingsLength = dateTimeList.length
     if (readingsLength != 0) {
         for (let index2 = 0; index2 <= readingsLength - 1; index2++) {
+            let index = 0
             // convert number from pins to binary string
             pinReading = dec2bin(pinReadingList[index2])
             serial.writeString(dateTimeList[index2])
@@ -130,7 +131,9 @@ function upLoadUSB () {
                 serial.writeString("" + pinReading.charAt(3 - bit32) + ",")
                 basic.pause(10)
             }
+            serial.writeNumber(vBatList[index])
             serial.writeLine("")
+            basic.pause(10)
         }
     } else {
         serial.writeLine("No stored readings!")
