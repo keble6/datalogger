@@ -28,21 +28,15 @@ function dec2bin (num: number) {
     return string
 }
 function readVbat () {
-    // Turn off display to allow use of all pins
-    led.enable(true)
     // switch ON the 2.0V reference for Vbat
     pins.digitalWritePin(DigitalPin.P16, 0)
-    basic.pause(10)
+    basic.pause(100)
     P0ADC = pins.analogReadPin(AnalogPin.P0)
     // The ADC full scale is 1023 which is the Vbat (3V pin) voltage. So the number read at P0 (called P0ADC), which is held at 2.0V, is 1023*2.0/Vbat. So we get Vbat = 1023*2.0/PoADC
     vBat = vRef * 1023 * 10 / P0ADC
     // Round to 1 decimal place
     vBat = Math.floor(vBat)
     vBat = vBat / 10
-    basic.showNumber(vBat)
-    basic.pause(2000)
-    // Turn off display to allow use of all pins
-    led.enable(false)
     // switch OFF the 2.0V reference for Vbat
     pins.digitalWritePin(DigitalPin.P16, 1)
     return vBat
@@ -109,6 +103,7 @@ function string2csv (string: string) {
     bit = 0
     for (let index = 0; index < numInputs - 1; index++) {
         csv = "" + csv + string.charAt(bit) + ","
+        bit += 1
     }
     return csv
 }
@@ -212,6 +207,8 @@ loops.everyInterval(sampleTime, function () {
         dateTimeList.push(dateTimeString())
         // store pin state
         pinReadingList.push(inNumber)
+        // store timestamp
+        vBatList.push(readVbat())
         lastInNumber = inNumber
     }
     // Make a reading once every hour as a heartbeat
