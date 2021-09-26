@@ -17,8 +17,7 @@ function parseCommand () {
 }
 function dec2bin (num: number) {
     string = ""
-    maxbits = 9
-    maxbits += -1
+    maxbits = numInputs - 1
     x = num
     for (let i = 0; i <= maxbits; i++) {
         div = 2 ** (maxbits - i)
@@ -35,7 +34,6 @@ function readVbat () {
     pins.digitalWritePin(DigitalPin.P16, 0)
     basic.pause(10)
     P0ADC = pins.analogReadPin(AnalogPin.P0)
-    serial.writeNumber(P0ADC)
     // The ADC full scale is 1023 which is the Vbat (3V pin) voltage. So the number read at P0 (called P0ADC), which is held at 2.0V, is 1023*2.0/Vbat. So we get Vbat = 1023*2.0/PoADC
     vBat = vRef * 1023 * 10 / P0ADC
     // Round to 1 decimal place
@@ -70,17 +68,11 @@ function upLoad () {
     if (readingsLength != 0) {
         for (let index = 0; index <= readingsLength - 1; index++) {
             if (connected == 1) {
-                pinReading = dec2bin(pinReadingList[index])
                 bluetooth.uartWriteString(dateTimeList[index])
                 basic.pause(10)
                 bluetooth.uartWriteString(", ")
                 basic.pause(10)
-                for (let bit2 = 0; bit2 <= 4; bit2++) {
-                    bluetooth.uartWriteString("" + pinReading.charAt(8 - bit2) + ",")
-                }
-                for (let bit3 = 0; bit3 <= 3; bit3++) {
-                    bluetooth.uartWriteString("" + pinReading.charAt(3 - bit3) + ",")
-                }
+                bluetooth.uartWriteString(string2csv(dec2bin(pinReadingList[index])))
                 basic.pause(10)
                 bluetooth.uartWriteNumber(vBatList[index])
                 basic.pause(10)
@@ -112,28 +104,26 @@ function setTime () {
     )
     serial.writeLine("Date & time have been set ")
 }
+function string2csv (string: string) {
+    csv = ""
+    bit = 0
+    for (let index = 0; index < numInputs - 1; index++) {
+        csv = "" + csv + string.charAt(bit) + ","
+    }
+    return csv
+}
 function upLoadUSB () {
     readingsLength = dateTimeList.length
     serial.writeLine("readingsLength = " + readingsLength)
     if (readingsLength != 0) {
         for (let index2 = 0; index2 <= readingsLength - 1; index2++) {
-            let index3 = 0
-            serial.writeLine("index2 = " + index2)
-            // convert number from pins to binary string
-            pinReading = dec2bin(pinReadingList[index2])
             serial.writeString(dateTimeList[index2])
             basic.pause(10)
             serial.writeString(", ")
             basic.pause(10)
-            for (let bit22 = 0; bit22 <= 4; bit22++) {
-                serial.writeString("" + pinReading.charAt(8 - bit22) + ",")
-                basic.pause(10)
-            }
-            for (let bit32 = 0; bit32 <= 3; bit32++) {
-                serial.writeString("" + pinReading.charAt(3 - bit32) + ",")
-                basic.pause(10)
-            }
-            serial.writeNumber(vBatList[index3])
+            serial.writeString("" + (string2csv(dec2bin(pinReadingList[index2]))))
+            basic.pause(10)
+            serial.writeNumber(vBatList[index2])
             serial.writeLine("")
             basic.pause(10)
         }
@@ -143,12 +133,12 @@ function upLoadUSB () {
 }
 let inNumber = 0
 let charIn = ""
+let csv = ""
 let mm = ""
 let hh = ""
 let dt = ""
 let mo = ""
 let yr = ""
-let pinReading = ""
 let readingsLength = 0
 let connected = 0
 let vBat = 0
@@ -164,12 +154,17 @@ let command = ""
 let vBatList: number[] = []
 let pinReadingList: number[] = []
 let dateTimeList: string[] = []
+let numInputs = 0
 let vRef = 0
+// Measured value of Vref at P0
+vRef = 1.98
+// Number of inputs
+numInputs = 9
 serial.writeLine("Starting DATA LOGGER!")
 // Turn off display to allow use of all pins
 led.enable(false)
 // Reference voltage at P0 (when enabled by P16=0)
-vRef = 1.9
+// vRef = 1.9
 let Pstate = [0]
 let sampleTime = 1000
 pins.setPull(DigitalPin.P0, PinPullMode.PullNone)
@@ -186,7 +181,7 @@ pins.setPull(DigitalPin.P9, PinPullMode.PullNone)
 pins.digitalWritePin(DigitalPin.P16, 1)
 pins.setPull(DigitalPin.P16, PinPullMode.PullNone)
 let lastInNumber = 1024
-dateTimeList = [""]
+dateTimeList = []
 pinReadingList = [0]
 vBatList = [0]
 basic.forever(function () {
