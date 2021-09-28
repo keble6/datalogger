@@ -67,7 +67,7 @@ function upLoad () {
         for (let index = 0; index <= readingsLength - 1; index++) {
             if (BTconnected == 1) {
                 bluetooth.uartWriteString(dateTimeList[index])
-                basic.pause(100)
+                basic.pause(200)
                 bluetooth.uartWriteString(", ")
                 basic.pause(100)
                 bluetooth.uartWriteString(string2csv(dec2bin(pinReadingList[index])))
@@ -75,6 +75,7 @@ function upLoad () {
                 bluetooth.uartWriteNumber(vBatList[index])
                 basic.pause(100)
                 bluetooth.uartWriteLine("")
+                basic.pause(100)
             }
         }
     } else {
