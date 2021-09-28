@@ -50,10 +50,15 @@ function leadingZero (num: number) {
 }
 bluetooth.onBluetoothConnected(function () {
     connected = 1
+    // Turn on display to allow use Bluetooth
+    led.enable(true)
+    basic.pause(100)
     upLoad()
 })
 bluetooth.onBluetoothDisconnected(function () {
     connected = 0
+    // Turn off display to allow use of all pins
+    led.enable(false)
 })
 function upLoad () {
     serial.writeLine("Starting BT upload")
@@ -63,19 +68,20 @@ function upLoad () {
         for (let index = 0; index <= readingsLength - 1; index++) {
             if (connected == 1) {
                 bluetooth.uartWriteString(dateTimeList[index])
-                basic.pause(10)
+                basic.pause(100)
                 bluetooth.uartWriteString(", ")
-                basic.pause(10)
+                basic.pause(100)
                 bluetooth.uartWriteString(string2csv(dec2bin(pinReadingList[index])))
-                basic.pause(10)
+                basic.pause(100)
                 bluetooth.uartWriteNumber(vBatList[index])
-                basic.pause(10)
+                basic.pause(100)
                 bluetooth.uartWriteLine("")
             }
         }
     } else {
         bluetooth.uartWriteLine("No stored readings!")
     }
+    serial.writeLine("Ending BT upload")
 }
 function dateTimeString () {
     return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute()) + ":" + leadingZero(DS3231.second())
@@ -151,6 +157,7 @@ let pinReadingList: number[] = []
 let dateTimeList: string[] = []
 let numInputs = 0
 let vRef = 0
+bluetooth.startUartService()
 // Measured value of Vref at P0
 vRef = 1.98
 // Number of inputs
