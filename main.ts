@@ -133,8 +133,12 @@ function upLoadUSB () {
         serial.writeLine("No stored readings!")
     }
 }
+// Serial USB - requires at Terminal: local echo, CR+LF on send, clear input on send
+serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+    stringIn = serial.readUntil(serial.delimiters(Delimiters.NewLine))
+    parseCommand()
+})
 let inNumber = 0
-let charIn = ""
 let csv = ""
 let mm = ""
 let hh = ""
@@ -186,17 +190,6 @@ let lastInNumber = 1024
 dateTimeList = []
 pinReadingList = [0]
 vBatList = [0]
-basic.forever(function () {
-    charIn = serial.readString()
-    stringIn = "" + stringIn + charIn
-    if (charIn.compare(String.fromCharCode(13)) == 0) {
-        serial.writeString("" + String.fromCharCode(13) + String.fromCharCode(10))
-        parseCommand()
-        stringIn = ""
-    } else {
-        serial.writeString(charIn)
-    }
-})
 loops.everyInterval(sampleTime, function () {
     inNumber = 0
     inNumber += pins.digitalReadPin(DigitalPin.P1)
