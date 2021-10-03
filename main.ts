@@ -1,25 +1,3 @@
-function upLoadBT () {
-    basic.pause(100)
-    readingsLength = dateTimeList.length
-    if (readingsLength != 0) {
-        for (let index = 0; index <= readingsLength - 1; index++) {
-            if (BTconnected == 1) {
-                bluetooth.uartWriteString(dateTimeList[index])
-                basic.pause(200)
-                bluetooth.uartWriteString(", ")
-                basic.pause(100)
-                bluetooth.uartWriteString(string2csv(dec2bin(pinReadingList[index])))
-                basic.pause(100)
-                bluetooth.uartWriteLine("")
-                basic.pause(100)
-            }
-        }
-    } else {
-        bluetooth.uartWriteLine("No stored readings!")
-    }
-    // Turn off display to allow use of all pins
-    led.enable(false)
-}
 function parseCommand () {
     command = stringIn.substr(0, 2)
     params = stringIn.substr(2, stringIn.length - 2)
@@ -56,18 +34,6 @@ function leadingZero (num: number) {
         return convertToText(num)
     }
 }
-bluetooth.onBluetoothConnected(function () {
-    BTconnected = 1
-    // Turn off display to allow use of all pins
-    led.enable(true)
-    basic.pause(100)
-    upLoadBT()
-})
-bluetooth.onBluetoothDisconnected(function () {
-    BTconnected = 0
-    // Turn off display to allow use of all pins
-    led.enable(false)
-})
 function dateTimeString () {
     return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute()) + ":" + leadingZero(DS3231.second())
 }
@@ -122,6 +88,7 @@ serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
     parseCommand()
 })
 let inNumber = 0
+let readingsLength = 0
 let csv = ""
 let mm = ""
 let hh = ""
@@ -136,12 +103,10 @@ let string = ""
 let params = ""
 let stringIn = ""
 let command = ""
-let BTconnected = 0
-let readingsLength = 0
 let pinReadingList: number[] = []
 let dateTimeList: string[] = []
 let numInputs = 0
-bluetooth.startUartService()
+led.enable(false)
 // Number of inputs
 numInputs = 9
 serial.writeLine("Starting DATA LOGGER!")
@@ -165,6 +130,7 @@ let lastInNumber = 1024
 dateTimeList = []
 pinReadingList = [0]
 loops.everyInterval(sampleTime, function () {
+    let BTconnected = 0
     inNumber = 0
     inNumber += pins.digitalReadPin(DigitalPin.P1)
     inNumber += 2 * pins.digitalReadPin(DigitalPin.P2)
